@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { Plus, Search, Trash2, Edit, Eye, UserPlus, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
+import { api } from '../lib/api';
 
 interface Student {
   id: number;
@@ -28,14 +29,12 @@ export default function Students() {
   const [gradeLevel, setGradeLevel] = useState('');
 
   const fetchStudents = () => {
-    fetch('/api/students', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => res.json())
-      .then(data => {
+    if (token) {
+      api.getStudents(token).then(data => {
         setStudents(data);
         setLoading(false);
       });
+    }
   };
 
   useEffect(() => {
@@ -44,22 +43,14 @@ export default function Students() {
 
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!token) return;
     try {
-      const res = await fetch('/api/students', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ first_name: firstName, last_name: lastName, grade_level: gradeLevel })
-      });
-      if (res.ok) {
-        setShowAddModal(false);
-        setFirstName('');
-        setLastName('');
-        setGradeLevel('');
-        fetchStudents();
-      }
+      await api.addStudent(token, { first_name: firstName, last_name: lastName, grade_level: gradeLevel });
+      setShowAddModal(false);
+      setFirstName('');
+      setLastName('');
+      setGradeLevel('');
+      fetchStudents();
     } catch (error) {
       console.error(error);
     }
@@ -67,24 +58,15 @@ export default function Students() {
 
   const handleEditStudent = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingStudent) return;
+    if (!editingStudent || !token) return;
     try {
-      const res = await fetch(`/api/students/${editingStudent.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ first_name: firstName, last_name: lastName, grade_level: gradeLevel })
-      });
-      if (res.ok) {
-        setShowEditModal(false);
-        setEditingStudent(null);
-        setFirstName('');
-        setLastName('');
-        setGradeLevel('');
-        fetchStudents();
-      }
+      await api.updateStudent(token, editingStudent.id, { first_name: firstName, last_name: lastName, grade_level: gradeLevel });
+      setShowEditModal(false);
+      setEditingStudent(null);
+      setFirstName('');
+      setLastName('');
+      setGradeLevel('');
+      fetchStudents();
     } catch (error) {
       console.error(error);
     }
@@ -99,16 +81,11 @@ export default function Students() {
   };
 
   const confirmDelete = async () => {
-    if (!studentToDelete) return;
+    if (!studentToDelete || !token) return;
     try {
-      const res = await fetch(`/api/students/${studentToDelete}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        fetchStudents();
-        setStudentToDelete(null);
-      }
+      await api.deleteStudent(token, studentToDelete);
+      fetchStudents();
+      setStudentToDelete(null);
     } catch (error) {
       console.error(error);
     }

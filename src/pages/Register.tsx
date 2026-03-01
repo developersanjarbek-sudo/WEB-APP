@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { GraduationCap, Mail, Lock, User, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
+import { api } from '../lib/api';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -19,18 +20,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Xatolik yuz berdi');
-      }
-
+      const data = await api.register({ name, email, password });
       login(data.token, data.user);
       navigate('/');
     } catch (err: any) {

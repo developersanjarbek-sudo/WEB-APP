@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import { api } from '../lib/api';
 
 interface User {
   id: number;
@@ -23,22 +24,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     if (token) {
-      fetch('/api/auth/me', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      .then(res => {
-        if (res.ok) return res.json();
-        throw new Error('Invalid token');
-      })
-      .then(data => {
-        setUser(data.user);
-      })
-      .catch(() => {
-        logout();
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+      api.getMe(token)
+        .then(data => {
+          setUser(data.user);
+        })
+        .catch(() => {
+          logout();
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     } else {
       setLoading(false);
     }

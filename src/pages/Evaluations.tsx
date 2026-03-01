@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, Plus, Star, Calendar, BookOpen, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { api } from '../lib/api';
 
 interface Evaluation {
   id: number;
@@ -34,49 +35,37 @@ export default function Evaluations() {
   const [comments, setComments] = useState('');
 
   const fetchEvaluations = () => {
-    fetch(`/api/students/${id}/evaluations`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => res.json())
-      .then(data => {
+    if (token && id) {
+      api.getEvaluations(token, Number(id)).then(data => {
         setEvaluations(data);
       });
+    }
   };
 
   useEffect(() => {
-    // Fetch student details
-    fetch('/api/students', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => res.json())
-      .then(data => {
+    if (token && id) {
+      // Fetch student details
+      api.getStudents(token).then(data => {
         const found = data.find((s: Student) => s.id === Number(id));
         if (found) setStudent(found);
         else navigate('/students');
       });
 
-    fetchEvaluations();
-    setLoading(false);
+      fetchEvaluations();
+      setLoading(false);
+    }
   }, [id, token, navigate]);
 
   const handleAddEvaluation = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!token || !id) return;
     try {
-      const res = await fetch(`/api/students/${id}/evaluations`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ subject, score: Number(score), comments })
-      });
-      if (res.ok) {
-        setShowAddModal(false);
-        setSubject('');
-        setScore('');
-        setComments('');
-        fetchEvaluations();
-      }
+      await api.addEvaluation(token, Number(id), { subject, score: Number(score), comments });
+      setShowAddModal(false);
+      setSubject('');
+      setScore('');
+      setComments('');
+      fetchEvaluations();
     } catch (error) {
       console.error(error);
     }

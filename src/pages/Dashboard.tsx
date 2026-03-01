@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Trophy, Users, Star, TrendingUp } from 'lucide-react';
 import { motion } from 'motion/react';
+import { api } from '../lib/api';
 
 interface RankingStudent {
   id: number;
@@ -18,14 +19,12 @@ export default function Dashboard() {
   const { token } = useAuth();
 
   useEffect(() => {
-    fetch('/api/ranking', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => res.json())
-      .then(data => {
+    if (token) {
+      api.getRanking(token).then(data => {
         setRanking(data);
         setLoading(false);
       });
+    }
   }, [token]);
 
   if (loading) {
